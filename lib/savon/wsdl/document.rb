@@ -33,14 +33,6 @@ module Savon
       # Sets the SOAP namespace.
       attr_writer :namespace
 
-      # Returns the SOAP endpoint.
-      def endpoint
-        @endpoint ||= parser.endpoint
-      end
-
-      # Sets the SOAP endpoint.
-      attr_writer :endpoint
-
       # Returns an Array of available SOAP actions.
       def soap_actions
         @soap_actions ||= parser.operations.keys
@@ -59,6 +51,14 @@ module Savon
       # Returns a Hash of SOAP operations.
       def operations
         @operations ||= parser.operations
+      end
+
+      def bindings
+        @bindings ||= parser.bindings
+      end
+
+      def binding_endpoint(key)
+        bindings[operations[key][:binding]]
       end
 
       # Returns the elementFormDefault value.

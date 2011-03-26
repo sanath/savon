@@ -105,7 +105,7 @@ module Savon
 
     # Expects and Array of +options+ and preconfigures the system.
     def preconfigure(options)
-      soap.endpoint = wsdl.endpoint
+      soap.endpoint = wsdl.binding_endpoint(options[1])
       soap.namespace_identifier = options[0]
       soap.namespace = wsdl.namespace
       soap.element_form_default = wsdl.element_form_default if wsdl.present?

@@ -16,6 +16,7 @@ module Savon
         @path = []
         @operations = {}
         @namespaces = {}
+        @bindings = {}
         @element_form_default = :unqualified
       end
 
@@ -25,11 +26,10 @@ module Savon
       # Returns the SOAP operations.
       attr_reader :operations
 
-      # Returns the SOAP endpoint.
-      attr_reader :endpoint
-
       # Returns the elementFormDefault value.
       attr_reader :element_form_default
+
+      attr_reader :bindings
 
       # Hook method called when the stream parser encounters a starting tag.
       def tag_start(tag, attrs)
@@ -49,11 +49,14 @@ module Savon
         end
 
         @section = tag.to_sym if Sections.include?(tag) && depth <= 2
+        @section_attrs = attrs if Sections.include?(tag) && depth <= 2
+
+        @binding = attrs["binding"].split(":").reverse[0] if @section == :service && tag == "port"
 
         @namespace ||= attrs["targetNamespace"] if @section == :definitions
-        @endpoint ||= URI(URI.escape(attrs["location"])) if @section == :service && tag == "address"
 
         operation_from tag, attrs if @section == :binding && tag == "operation"
+        operation_from tag, attrs if @section == :service && tag == "address"
       end
 
       # Returns our current depth in the WSDL document.
@@ -88,8 +91,12 @@ module Savon
           @action = !attrs["soapAction"].blank? ? attrs["soapAction"] : @input
           @input = @action.split("/").last if !@input || @input.empty?
 
-          @operations[@input.snakecase.to_sym] = { :action => @action, :input => @input }
+          @operations[@input.snakecase.to_sym] = { :action => @action, :input => @input, :binding => @section_attrs["name"] }
           @input, @action = nil, nil
+        end
+
+        if attrs["location"]
+          @bindings[@binding] = attrs["location"]
         end
       end
 
